@@ -6,9 +6,9 @@ output: html_notebook
 Documenting my workflow:
 
 Install tools:
-```{r}
-library(devtools)
-devtools::install_github("UW-GAC/wgsaparsr")
+```{r message=FALSE}
+#library(devtools)
+#devtools::install_github("UW-GAC/wgsaparsr@1.0.0.9003")
 library(wgsaparsr)
 ```
 
@@ -25,11 +25,11 @@ get_fields("snp.tsv.gz")
 
 That's lots of fields. We don't need them all for our current purposes, so select a subset of the fields from source file:
 
-(note that the VEP_ensembl_* fields are complex, so need to be parsed further to make tidy)
+(note that the VEP_ensembl_* fields are complex, and involve many transcript-level annotations for each position-based line, so we need to pivot the lines on these columns to make transcript-level annotations for future filtering flexibility and to make data tidy)
 ```{r}
 desired_columns <- 
   c(
-    "#chr",
+    "`#chr`", #NOTE: backtics on #chr because it starts with special character!
     "pos",
     "ref",
     "alt",
@@ -61,18 +61,26 @@ desired_columns <-
     "VEP_ensembl_LoF_info"
     )
   
-
+parse_to_file("snp.tsv.gz", "parsed_snp.tsv", desired_columns, to_split, verbose = TRUE)
 ```
 
 Now, let's look at that parsed WGSA file:
+```{r}
+readLines("parsed_snp.tsv", n=2)
+```
 
+Also not super pretty. Listing the fields:
+```{r}
+# list all fields in an annotation file: 
+get_fields("parsed_snp.tsv")
+```
 
 NOTE: the CADD phred score field is different in the indel file than the snp annotation file. In the snp file, it's CADD_phred; in the indel file it's CADDphred.
 
 ```{r}
 desired_columns_indel <- 
   c(
-    "`#chr`",
+    "`#chr`", #NOTE: backtics on #chr because it starts with special character!
     "pos",
     "ref",
     "alt",

@@ -1,0 +1,59 @@
+---
+title: "Gene Definition from Gencode .gtf"
+output: html_notebook
+---
+
+Documenting my workflow for making a gene definitions table from a gencode .gtf file. The gtf file format is described at [https://www.gencodegenes.org/data_format.html](https://www.gencodegenes.org/data_format.html).
+
+I'll be working with the gencode release 19 because it's the last one on GRCh37. The [file](ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_human/release_19/gencode.v19.annotation.gtf.gz) can be downloaded via [https://www.gencodegenes.org/releases/19.html](https://www.gencodegenes.org/releases/19.html).
+
+In this case, I've trimmed the gencode file to include only chromosome 22 feature definitions (since that's the variant annotation set I'm using for the demo).
+
+```{r}
+gtf_source <- "chr22.gtf.gz"
+```
+
+Install tools:
+```{r message=FALSE}
+library(devtools)
+devtools::install_github("UW-GAC/genetable")
+
+library(genetable)
+library(tidyverse)
+```
+
+Now, kick the tires:
+```{r}
+# import the gtf file to a tidy data frame (a tibble)
+gtf <- import_gencode(gtf_source)
+
+# look at the tibble
+glimpse(gtf)
+```
+
+```{r}
+# summarize the number of features by tag.
+summarize_tag(gtf, tag = "basic")
+```
+
+```{r}
+# filter gtf file to return transcript features tagged basic
+basic_transcripts <- filter_gencode(gtf, featurearg = "transcript", tagarg = "basic")
+
+# or filter for features == "gene"
+genes <- filter_gencode(gtf, featurearg = "gene")
+
+# define the boundaries of the feature of interest
+# this is slow
+#gene_bounds <- define_boundaries(basic_transcripts, "gene_id")
+gene_bounds <- define_boundaries(genes, "gene_id")
+
+# can check the resulting tibble for sanity
+glimpse(gene_bounds)
+```
+
+```{r}
+# save to file
+note <- 'This file includes starting and ending ranges for feature = "gene" in the gtf file.'
+save_to_file(gene_bounds, notes = note) # will automatically make file called feature_bounds_DATE.tsv
+```
