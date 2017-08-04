@@ -3,7 +3,7 @@ title: "WGSA parsing demo"
 output: html_notebook
 ---
 
-Documenting my workflow:
+Documenting my workflow for parsing WGSA output files:
 
 Install tools:
 ```{r message=FALSE}

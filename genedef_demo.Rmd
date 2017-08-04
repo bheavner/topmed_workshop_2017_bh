@@ -15,8 +15,8 @@ gtf_source <- "chr22.gtf.gz"
 
 Install tools:
 ```{r message=FALSE}
-library(devtools)
-devtools::install_github("UW-GAC/genetable")
+#library(devtools)
+#devtools::install_github("UW-GAC/genetable")
 
 library(genetable)
 library(tidyverse)
