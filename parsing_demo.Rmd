@@ -1,0 +1,125 @@
+---
+title: "WGSA parsing demo"
+output: html_notebook
+---
+
+Documenting my workflow:
+
+Install tools:
+```{r}
+library(devtools)
+devtools::install_github("UW-GAC/wgsaparsr")
+library(wgsaparsr)
+```
+
+First, let's look at this WGSA output file and see what we're working with:
+```{r}
+readLines("snp.tsv.gz", n=2)
+```
+
+Hrm. Not super pretty. I've made a function in wgsaparsr to make listing the fields prettier, though:
+```{r}
+# list all fields in an annotation file: 
+get_fields("snp.tsv.gz")
+```
+
+That's lots of fields. We don't need them all for our current purposes, so select a subset of the fields from source file:
+
+(note that the VEP_ensembl_* fields are complex, so need to be parsed further to make tidy)
+```{r}
+desired_columns <- 
+  c(
+    "#chr",
+    "pos",
+    "ref",
+    "alt",
+    "rs_dbSNP147",
+    # "CADDphred",
+    "CADD_phred", #NOTE: different than the indel annotation file.
+    "VEP_ensembl_Transcript_ID",
+    "VEP_ensembl_Gene_Name",
+    "VEP_ensembl_Gene_ID",
+    "VEP_ensembl_Consequence",
+    "VEP_ensembl_Amino_Acid_Change",
+    "VEP_ensembl_LoF",
+    "VEP_ensembl_LoF_filter",
+    "VEP_ensembl_LoF_flags",
+    "VEP_ensembl_LoF_info"
+    # "1000Gp3_AF" #skipped for the workshop because code doesn't work with this variable name
+    )
+    
+    to_split <-
+    c(
+    "VEP_ensembl_Consequence",
+    "VEP_ensembl_Transcript_ID",
+    "VEP_ensembl_Gene_Name",
+    "VEP_ensembl_Gene_ID",
+    "VEP_ensembl_Amino_Acid_Change",
+    "VEP_ensembl_LoF",
+    "VEP_ensembl_LoF_filter",
+    "VEP_ensembl_LoF_flags",
+    "VEP_ensembl_LoF_info"
+    )
+  
+
+```
+
+Now, let's look at that parsed WGSA file:
+
+
+NOTE: the CADD phred score field is different in the indel file than the snp annotation file. In the snp file, it's CADD_phred; in the indel file it's CADDphred.
+
+```{r}
+desired_columns_indel <- 
+  c(
+    "`#chr`",
+    "pos",
+    "ref",
+    "alt",
+    "rs_dbSNP147",
+    "CADDphred",
+    #  "CADD_phred", #NOTE: different than the general annotation file.
+    "VEP_ensembl_Transcript_ID",
+    "VEP_ensembl_Gene_Name",
+    "VEP_ensembl_Gene_ID",
+    "VEP_ensembl_Consequence",
+    "VEP_ensembl_Amino_Acid_Change",
+    "VEP_ensembl_LoF",
+    "VEP_ensembl_LoF_filter",
+    "VEP_ensembl_LoF_flags",
+    "VEP_ensembl_LoF_info"
+    # "1000Gp3_AF"#skipped for the workshop because code doesn't work with this variable name
+    )
+  
+parse_indel_to_file("indel.tsv.gz", "parsed_indel.tsv", desired_columns_indel, to_split, verbose = TRUE)
+```
+
+Check the parsed WGSA indel file:
+
+```{r}
+readLines("parsed_indel.tsv", n=2)
+```
+
+Also not super pretty. Listing the fields:
+```{r}
+# list all fields in an annotation file: 
+get_fields("parsed_indel.tsv")
+```
+
+#chr, pos, ref, alt, VEP_ensembl_Transcript_ID, and
+# VEP_ensembl_Gene_ID fields. Parse the VEP_ensembl_Transcript_ID and
+# VEP_ensembl_Gene_ID complex fields, and write the output to file
+
+target_columns <-
+  c("`#chr`", "pos", "ref", "alt", "VEP_ensembl_Transcript_ID", 
+    "VEP_ensembl_Gene_ID")
+
+columns_to_split <-
+  c("VEP_ensembl_Transcript_ID", "VEP_ensembl_Gene_ID")
+
+parse_to_file(soure = "WGSA_chr_1.gz", 
+  destination = "parsed_chr_1.csv", 
+  desired_columns = target_columns, 
+  to_split = columns_to_split, 
+  chunk_size = 1000) 
+```
