@@ -13,7 +13,7 @@ unit_defs <- read_tsv(unit_defs_file, comment = "#", skip = 1)
 unit_defs <- select(unit_defs, c(gene_id, agg_start, agg_end))
 
 #this works - but how add aggregation unit names?
-select(snps, c(chr, pos, ref, alt), num_range(unit_defs$agg_start, unit_defs$agg_end))
+#select(snps, c(chr, pos, ref, alt), num_range(unit_defs$agg_start, unit_defs$agg_end))
 
 #there's probably a nice vectorized way to do this, but for demonstration purposes, this will work:
 # make an empty tibble
@@ -45,8 +45,14 @@ for (rowIndex in 1:nrow(unit_defs)) {
     dplyr::filter(between(pos, unit_defs[rowIndex, ]$agg_start, unit_defs[rowIndex, ]$agg_end)) %>%
     distinct() %>%
     mutate(group_id = unit_defs[rowIndex, ]$gene_id)
-  
-  print(paste0("row: ", rowIndex, " snps to add: ", nrow(snpsToAdd), " indels to add: ", nrow(toAdd)))
+
+
+  if (10 %% rowIndex){
+    print(
+      paste0("row: ", rowIndex, 
+             " snps to add: ", nrow(snpsToAdd), 
+             " indels to add: ", nrow(toAdd)))
+  }
   
   if (nrow(toAdd) > 0) {
     foo <- add_row(
@@ -60,15 +66,20 @@ for (rowIndex in 1:nrow(unit_defs)) {
   }
 }
 
-glimpse(foo)
+#glimpse(foo)
 
 aggregated_variants <- distinct(foo)
 
-#save it for the analysis pipelin!
-save(aggregated_variants, file = "chr22_gene_aggregates.RDA")
+# what does it look like?
+glimpse(aggregated_variants)
 
+# how many genic units?
+distinct(as.tibble(aggregated_variants$group_id))
 
 # look at number of variants per aggregation unit:
 counts <- aggregated_variants %>% group_by(group_id) %>% summarize(n())
 
 range(counts$`n()`)
+
+#save it for the analysis pipeline!
+save(aggregated_variants, file = "chr22_gene_aggregates.RDA")
